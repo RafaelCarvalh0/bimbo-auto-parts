@@ -1,0 +1,207 @@
+﻿@{
+    ViewData["Title"] = "Categories";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/mainpages.css" />
+}
+
+<div class="page-wrapper">
+
+    <div class="page-header">
+        <div class="page-header-left">
+            <h1><i class="fas fa-tags me-2" style="color:#2563eb;font-size:1.3rem;"></i>Categories</h1>
+            <p>Manage your store product categories</p>
+        </div>
+        <button class="btn-add" onclick="AddCategory()">
+            <i class="fas fa-plus"></i> Add Category
+        </button>
+    </div>
+
+    <div class="table-card">
+        <div class="table-responsive">
+            <table id="datatable" class="table" style="width:100%">
+                <thead>
+                    <tr>
+                        <th style="width:80px;">Actions</th>
+                        <th style="width:60px;">#</th>
+                        <th>Name</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<partial name="_New" />
+
+@section Scripts {
+<script>
+
+    $(document).ready(function () {
+        LoadDatatable();
+        InitCharCounters();
+    });
+
+    function LoadDatatable() {
+        $('#datatable').DataTable({
+            deferRender: true,
+            serverSide: false,
+            destroy: true,
+            ajax: {
+                url: "@Url.Action("GetTable", "Categories")",
+                type: "GET",
+                dataSrc: 'data',
+                error: function () {
+                    Swal.fire({ icon: 'error', title: 'Loading Error', text: 'Failed to load categories.', confirmButtonColor: '#2563eb' });
+                }
+            },
+            columns: [
+                {
+                    render: function (data, type, row) {
+                        return `
+                            <a href="/Categories/Edit/${row.id}" class="btn-action btn-edit" title="Edit">
+                                <i class="fas fa-pencil-alt"></i>
+                            </a>
+                            <button onclick="DeleteCategory(${row.id}, '${EscapeJs(row.name)}')" class="btn-action btn-delete" title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        `;
+                    },
+                    orderable: false
+
+                },
+                { data: 'id',   className: 'col-id' },
+                { data: 'name', className: 'col-name' },
+                {
+                    data: 'description',
+                    className: 'col-desc',
+                    render: function (data) {
+                        if (!data) return '<span style="color:#d1d5db;">—</span>';
+                        return data.length > 70 ? data.substring(0, 70) + '…' : data;
+                    }
+                }
+            ],
+            language: {
+                emptyTable: '<div class="empty-state"><i class="fas fa-tags"></i><p>No categories found. Add one to get started.</p></div>',
+                search: '',
+                searchPlaceholder: 'Search categories...',
+                lengthMenu: 'Show _MENU_ entries',
+                info: 'Showing _START_ – _END_ of _TOTAL_ categories',
+                infoEmpty: 'No categories to show',
+                paginate: { previous: '‹', next: '›' }
+            },
+            pageLength: 10,
+            lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
+            order: [[1, 'asc']]
+        });
+    }
+
+    function AddCategory() {
+        $('#inputName').val('').removeClass('is-invalid');
+        $('#inputDescription').val('').removeClass('is-invalid');
+        $('#nameError, #descError').text('');
+        $('#nameCount').text('0');
+        $('#descCount').text('0');
+
+        new bootstrap.Modal(document.getElementById('createCategoryModal')).show();
+    }
+
+    function CreateCategory() {
+        const name        = $('#inputName').val().trim();
+        const description = $('#inputDescription').val().trim();
+
+        if (!name) {
+            $('#inputName').addClass('is-invalid');
+            $('#nameError').text('Name is required.');
+            return;
+        }
+
+        $('#inputName').removeClass('is-invalid');
+        $('#nameError').text('');
+
+        const $btn = $('#btnSave').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Saving...');
+
+        $.ajax({
+            type: 'POST',
+            url: '@Url.Action("Create", "Categories")',
+            contentType: 'application/json',
+            data: JSON.stringify({ name, description })
+        }).done(function () {
+
+            bootstrap.Modal.getInstance(document.getElementById('createCategoryModal')).hide();
+            Swal.fire({
+                icon: 'success',
+                title: 'Category Created!',
+                text: `"${name}" has been added successfully.`,
+                confirmButtonColor: '#2563eb',
+                timer: 2500,
+                timerProgressBar: true
+            }).then(() => LoadDatatable());
+
+        }).fail(function (xhr) {
+
+                console.log(xhr.responseJSON);
+
+                Swal.fire({
+                icon: 'warning',
+                title: 'Validation Error',
+                text: xhr.responseJSON?.message ?? 'An unexpected error occurred.',
+                confirmButtonColor: '#2563eb'
+
+        });
+
+        }).always(function () {
+            $('#btnSave').prop('disabled', false).html('<i class="fas fa-check"></i> Save Category');
+        });
+    }
+
+    function DeleteCategory(id, name) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Delete Category?',
+            html: `Are you sure you want to delete <strong>${name}</strong>?<br><span style="font-size:0.85rem;color:#6b7280;">This action cannot be undone.</span>`,
+            showCancelButton: true,
+            confirmButtonColor: '#e11d48',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: '<i class="fas fa-trash me-1"></i> Delete',
+            cancelButtonText: 'Cancel',
+            reverseButtons: true
+        }).then((result) => {
+            if (!result.isConfirmed) return;
+            $.ajax({
+                type: "DELETE",
+                url: `/Categories/Delete/${id}`
+            }).done(function () {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Deleted!',
+                    text: `"${name}" has been removed.`,
+                    confirmButtonColor: '#2563eb',
+                    timer: 2500,
+                    timerProgressBar: true
+                }).then(() => LoadDatatable());
+            }).fail(function (xhr) {
+                Swal.fire({ icon: 'error', title: 'Could not delete', text: xhr.responseJSON?.message ?? 'An unexpected error occurred.', confirmButtonColor: '#2563eb' });
+            });
+        });
+    }
+
+    function InitCharCounters() {
+        $('#inputName').on('input', function () { $('#nameCount').text($(this).val().length); });
+        $('#inputDescription').on('input', function () { $('#descCount').text($(this).val().length); });
+    }
+
+    function EscapeJs(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/\\/g, '\\\\')
+            .replace(/'/g, "\\'")
+            .replace(/"/g, '&quot;')
+            .replace(/\n/g, '\\n');
+    }
+
+</script>
+}

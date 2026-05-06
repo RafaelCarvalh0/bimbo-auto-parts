@@ -1,0 +1,105 @@
+﻿@{
+    ViewData["Title"] = "Bimbo Auto Parts";
+}
+
+<style>
+    .hero {
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        background-image: url('https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=1920&q=80');
+        background-size: cover;
+        background-position: center;
+        filter: brightness(0.45);
+    }
+
+    .hero-content {
+        min-height: calc(100vh - 56px);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 2rem;
+        color: #fff;
+    }
+
+        .hero-content h1 {
+            font-size: clamp(2.2rem, 6vw, 4rem);
+            font-weight: 800;
+            letter-spacing: -1px;
+            margin-bottom: 1rem;
+            text-shadow: 0 2px 16px rgba(0,0,0,0.4);
+        }
+
+        .hero-content p {
+            font-size: clamp(1rem, 2.5vw, 1.25rem);
+            color: rgba(255,255,255,0.85);
+            max-width: 520px;
+            line-height: 1.7;
+            text-shadow: 0 1px 8px rgba(0,0,0,0.3);
+            margin-bottom: 2rem;
+        }
+
+    .hero-actions {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .btn-hero-primary {
+        background: #2563eb;
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        padding: 0.75rem 2rem;
+        font-size: 0.95rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: background 0.18s, transform 0.12s, box-shadow 0.18s;
+        box-shadow: 0 4px 16px rgba(37,99,235,0.35);
+    }
+
+        .btn-hero-primary:hover {
+            background: #1d4ed8;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(37,99,235,0.45);
+            color: #fff;
+        }
+
+    .btn-hero-secondary {
+        background: rgba(255,255,255,0.12);
+        color: #fff;
+        border: 2px solid rgba(255,255,255,0.5);
+        border-radius: 10px;
+        padding: 0.75rem 2rem;
+        font-size: 0.95rem;
+        font-weight: 600;
+        text-decoration: none;
+        backdrop-filter: blur(4px);
+        transition: background 0.18s, border-color 0.18s, transform 0.12s;
+    }
+
+        .btn-hero-secondary:hover {
+            background: rgba(255,255,255,0.22);
+            border-color: #fff;
+            transform: translateY(-2px);
+            color: #fff;
+        }
+</style>
+
+<div class="hero"></div>
+
+<div class="hero-content">
+    <h1>Welcome to Bimbo Auto Parts</h1>
+    <p>Bimbo Auto Parts is the best choice for your four-wheeled friend. Quality parts, great prices.</p>
+    <div class="hero-actions">
+        <a href="/Products" class="btn-hero-primary">
+            <i class="fas fa-shopping-cart me-2"></i>Browse Products
+        </a>
+        <a href="/Categories" class="btn-hero-secondary">
+            <i class="fas fa-tags me-2"></i>View Categories
+        </a>
+    </div>
+</div>

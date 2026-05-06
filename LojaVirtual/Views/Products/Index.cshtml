@@ -1,0 +1,232 @@
+﻿@{
+    ViewData["Title"] = "Products";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/mainpages.css" />
+}
+
+<div class="page-wrapper">
+
+    <div class="page-header">
+        <div class="page-header-left">
+            <h1><i class="fas fa-box me-2" style="color:#2563eb;font-size:1.3rem;"></i>Products</h1>
+            <p>Manage your store product</p>
+        </div>
+        <button class="btn-add" onclick="AddProduct()">
+            <i class="fas fa-plus"></i> Add Product
+        </button>
+    </div>
+
+    <div class="table-card">
+        <div class="table-responsive">
+            <table id="datatable" class="table" style="width:100%">
+                <thead>
+                    <tr>
+                        <th style="width:80px;">Actions</th>
+                        <th style="width:60px;">#</th>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Price</th>
+                        <th>Category</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<partial name="_New" />
+
+@section Scripts {
+    <script>
+
+        $(document).ready(function () {
+            LoadDatatable();
+            InitCharCounters();
+        });
+
+        function LoadDatatable() {
+            $('#datatable').DataTable({
+                deferRender: true,
+                serverSide: false,
+                destroy: true,
+                ajax: {
+                    url: "@Url.Action("GetTable", "Products")",
+                    type: "GET",
+                    dataSrc: 'data',
+                    error: function () {
+                        Swal.fire({ icon: 'error', title: 'Loading Error', text: 'Failed to load Products.', confirmButtonColor: '#2563eb' });
+                    }
+                },
+                columns: [
+                    {
+                        render: function (data, type, row) {
+                            return `
+                                <a href="/Products/Edit/${row.id}" class="btn-action btn-edit" title="Edit">
+                                    <i class="fas fa-pencil-alt"></i>
+                                </a>
+                                <button onclick="DeleteProduct(${row.id}, '${EscapeJs(row.name)}')" class="btn-action btn-delete" title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            `;
+                        },
+                        orderable: false
+
+                    },
+                    { data: 'id',   className: 'col-id' },
+                    { data: 'name', className: 'col-name' },
+                    {
+                        data: 'description',
+                        className: 'col-desc',
+                        render: function (data) {
+                            if (!data) return '<span style="color:#d1d5db;">—</span>';
+                            return data.length > 70 ? data.substring(0, 70) + '…' : data;
+                        }
+                    },
+                    {
+                        data: 'price',
+                        render: function (data) {
+                            return data ? `$ ${parseFloat(data).toFixed(2)}` : '—';
+                        }
+                    },
+                    { data: 'categoryName' }
+                ],
+                language: {
+                    emptyTable: '<div class="empty-state"><i class="fas fa-box"></i><p>No products found. Add one to get started.</p></div>',
+                    search: '',
+                    searchPlaceholder: 'Search products...',
+                    lengthMenu: 'Show _MENU_ entries',
+                    info: 'Showing _START_ – _END_ of _TOTAL_ products',
+                    infoEmpty: 'No products to show',
+                    paginate: { previous: '‹', next: '›' }
+                },
+                pageLength: 10,
+                lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
+                order: [[1, 'asc']]
+            });
+        }
+
+        function AddProduct() {
+            $('#inputName, #inputDescription').val('').removeClass('is-invalid');
+            $('#inputPrice').val('').removeClass('is-invalid');
+            $('#inputCategory').val('').removeClass('is-invalid');
+            $('#nameError, #descError, #priceError, #categoryError').text('');
+            $('#nameCount, #descCount').text('0');
+
+            LoadProducts();
+            new bootstrap.Modal(document.getElementById('createProductModal')).show();
+        }
+
+        function LoadProducts() {
+            $('#inputCategory').html('<option value="">Select a category...</option>');
+
+            $.ajax({
+                type: 'GET',
+                url: '@Url.Action("GetTable", "Categories")'
+            }).done(function (response) {
+                response.data.forEach(function (cat) {
+                    $('#inputCategory').append(`<option value="${cat.id}">${cat.name}</option>`);
+                });
+            }).fail(function () {
+                Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to load categories.', confirmButtonColor: '#2563eb' });
+            });
+        }
+
+        function CreateProduct() {
+            const name        = $('#inputName').val().trim();
+            const description = $('#inputDescription').val().trim();
+            const price       = parseFloat($('#inputPrice').val());
+            const categoryId  = parseInt($('#inputCategory').val());
+
+            let valid = true;
+
+            if (!name) {
+                $('#inputName').addClass('is-invalid');
+                $('#nameError').text('Name is required.');
+                valid = false;
+            }
+
+            if (!price || price <= 0) {
+                $('#inputPrice').addClass('is-invalid');
+                $('#priceError').text('Price must be greater than zero.');
+                valid = false;
+            }
+
+            if (!categoryId) {
+                $('#inputCategory').addClass('is-invalid');
+                $('#categoryError').text('Please select a category.');
+                valid = false;
+            }
+
+            if (!valid) return;
+
+            $('#btnSave').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Saving...');
+
+            $.ajax({
+                type: 'POST',
+                url: '@Url.Action("Create", "Products")',
+                contentType: 'application/json',
+                data: JSON.stringify({ name, description, price, categoryId })
+            }).done(function () {
+                bootstrap.Modal.getInstance(document.getElementById('createProductModal')).hide();
+                Swal.fire({
+                    icon: 'success', title: 'Product Created!',
+                    text: `"${name}" has been added successfully.`,
+                    confirmButtonColor: '#2563eb', timer: 2500, timerProgressBar: true
+                }).then(() => LoadDatatable());
+            }).fail(function (xhr) {
+                Swal.fire({ icon: 'warning', title: 'Error', text: xhr.responseJSON?.message ?? 'An unexpected error occurred.', confirmButtonColor: '#2563eb' });
+            }).always(function () {
+                $('#btnSave').prop('disabled', false).html('<i class="fas fa-check"></i> Save Product');
+            });
+        }
+
+        function DeleteProduct(id, name) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Delete Product?',
+                html: `Are you sure you want to delete <strong>${name}</strong>?<br><span style="font-size:0.85rem;color:#6b7280;">This action cannot be undone.</span>`,
+                showCancelButton: true,
+                confirmButtonColor: '#e11d48',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: '<i class="fas fa-trash me-1"></i> Delete',
+                cancelButtonText: 'Cancel',
+                reverseButtons: true
+            }).then((result) => {
+                if (!result.isConfirmed) return;
+                $.ajax({
+                    type: "DELETE",
+                    url: `/Products/Delete/${id}`
+                }).done(function () {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Deleted!',
+                        text: `"${name}" has been removed.`,
+                        confirmButtonColor: '#2563eb',
+                        timer: 2500,
+                        timerProgressBar: true
+                    }).then(() => LoadDatatable());
+                }).fail(function (xhr) {
+                    Swal.fire({ icon: 'error', title: 'Could not delete', text: xhr.responseJSON?.message ?? 'An unexpected error occurred.', confirmButtonColor: '#2563eb' });
+                });
+            });
+        }
+
+        function InitCharCounters() {
+            $('#inputName').on('input', function () { $('#nameCount').text($(this).val().length); });
+            $('#inputDescription').on('input', function () { $('#descCount').text($(this).val().length); });
+        }
+
+        function EscapeJs(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/\\/g, '\\\\')
+                .replace(/'/g, "\\'")
+                .replace(/"/g, '&quot;')
+                .replace(/\n/g, '\\n');
+        }
+
+    </script>
+}

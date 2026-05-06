@@ -1,0 +1,84 @@
+﻿@using LojaVirtual.ViewModels
+@model CategoryViewModel
+
+@{
+    ViewData["Title"] = "Edit Category";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/mainpages.css" />
+}
+
+<div class="page-wrapper">
+
+    <div class="page-header">
+        <div class="page-header-left">
+            <h1><i class="fas fa-tag me-2" style="color:#2563eb;font-size:1.3rem;"></i>Edit Category</h1>
+            <p>Update the details for <strong>@Model.Name</strong></p>
+        </div>
+        <a asp-action="Index" class="btn-back">
+            <i class="fas fa-arrow-left me-1"></i> Back to Categories
+        </a>
+    </div>
+
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="edit-alert edit-alert-danger mb-4">
+            <i class="fas fa-exclamation-circle me-2"></i>
+            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+            {
+                <span>@error.ErrorMessage</span>
+            }
+        </div>
+    }
+
+    <div class="edit-card">
+
+        <div class="edit-card-header">
+            <i class="fas fa-tags me-2" style="color:#2563eb;"></i>
+            Category Details
+        </div>
+
+        <div class="edit-card-body">
+            <form asp-action="Edit" method="post">
+                <input type="hidden" asp-for="Id" />
+
+                <div class="edit-form-group">
+                    <label class="edit-label">
+                        Name <span class="required">*</span>
+                    </label>
+                    <input asp-for="Name" class="edit-input" placeholder="e.g. Electronics" maxlength="100" />
+                    <div class="edit-char-counter">
+                        <span asp-validation-for="Name" class="edit-validation-error"></span>
+                        <span class="char-hint">max 100 characters</span>
+                    </div>
+                </div>
+
+                <div class="edit-form-group">
+                    <label class="edit-label">Description</label>
+                    <textarea asp-for="Description" class="edit-input edit-textarea"
+                              rows="4" placeholder="Brief description of this category..."
+                              maxlength="500"></textarea>
+                    <div class="edit-char-counter">
+                        <span asp-validation-for="Description" class="edit-validation-error"></span>
+                        <span class="char-hint">max 500 characters</span>
+                    </div>
+                </div>
+
+                <div class="edit-actions">
+                    <a asp-action="Index" class="btn-cancel-form">
+                        Cancel
+                    </a>
+                    <button type="submit" class="btn-save-form">
+                        <i class="fas fa-check me-1"></i> Save Changes
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}

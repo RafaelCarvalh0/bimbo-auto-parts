@@ -1,0 +1,140 @@
+﻿@using LojaVirtual.ViewModels
+@model ProductViewModel
+
+@{
+    ViewData["Title"] = "Edit Product";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/mainpages.css" />
+}
+
+<div class="page-wrapper">
+
+    <div class="page-header">
+        <div class="page-header-left">
+            <h1><i class="fas fa-box me-2" style="color:#2563eb;font-size:1.3rem;"></i>Edit Product</h1>
+            <p>Update the details for <strong>@Model.Name</strong></p>
+        </div>
+        <a asp-action="Index" class="btn-back">
+            <i class="fas fa-arrow-left me-1"></i> Back to Products
+        </a>
+    </div>
+
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="edit-alert edit-alert-danger mb-4">
+            <i class="fas fa-exclamation-circle me-2"></i>
+            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+            {
+                <span>@error.ErrorMessage</span>
+            }
+        </div>
+    }
+
+    <div class="edit-card">
+
+        <div class="edit-card-header">
+            <i class="fas fa-box me-2" style="color:#2563eb;"></i>
+            Product Details
+        </div>
+
+        <div class="edit-card-body">
+            <form asp-action="Edit" method="post">
+                <input type="hidden" asp-for="Id" />
+
+                <div class="edit-form-group">
+                    <label class="edit-label">
+                        Name <span class="required">*</span>
+                    </label>
+                    <input asp-for="Name" class="edit-input" placeholder="e.g. Brake Pad" maxlength="100" />
+                    <div class="edit-char-counter">
+                        <span asp-validation-for="Name" class="edit-validation-error"></span>
+                        <span class="char-hint">max 100 characters</span>
+                    </div>
+                </div>
+
+                <div class="edit-form-group">
+                    <label class="edit-label">Description</label>
+                    <textarea asp-for="Description" class="edit-input edit-textarea"
+                              rows="4" placeholder="Brief description of this product..."
+                              maxlength="500"></textarea>
+                    <div class="edit-char-counter">
+                        <span asp-validation-for="Description" class="edit-validation-error"></span>
+                        <span class="char-hint">max 500 characters</span>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="edit-label">Price <span class="required">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text edit-prefix">$</span>
+
+                            <input asp-for="Price" 
+                                   type="number"
+                                   id="Price"
+                                   class="form-control"
+                                   placeholder="0.00"
+                                   min="0"
+                                   step="0.01"
+                                   style="border-radius:0 10px 10px 0; border-left:none;"
+                                   value="@Model.Price.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)" />
+
+                        </div>
+                        <span asp-validation-for="Price" class="edit-validation-error"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="edit-label">
+                            Category <span class="required">*</span>
+                        </label>
+                        <select asp-for="CategoryId" id="selectCategory" class="edit-input">
+                            <option value="">Loading categories...</option>
+                        </select>
+                        <span asp-validation-for="CategoryId" class="edit-validation-error"></span>
+                    </div>
+                </div>
+
+                <div class="edit-actions">
+                    <a asp-action="Index" class="btn-cancel-form">Cancel</a>
+                    <button type="submit" class="btn-save-form">
+                        <i class="fas fa-check me-1"></i> Save Changes
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    
+</style>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            const currentCategoryId = @Model.CategoryId;
+
+            $.ajax({
+                type: 'GET',
+                url: '@Url.Action("GetTable", "Categories")'
+            }).done(function (response) {
+                const select = $('#selectCategory');
+                select.html('<option value="">Select a category...</option>');
+
+                response.data.forEach(function (cat) {
+                    const selected = cat.id === currentCategoryId ? 'selected' : '';
+                    select.append(`<option value="${cat.id}" ${selected}>${cat.name}</option>`);
+                });
+            }).fail(function () {
+                $('#selectCategory').html('<option value="">Failed to load categories</option>');
+            });
+        });
+    </script>
+
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

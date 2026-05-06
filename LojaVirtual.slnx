@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="LojaVirtual.API/LojaVirtual.API.csproj" Id="8e166f89-8b9c-43e3-9077-55f13a5f7e47" />
+  <Project Path="LojaVirtual.Data/LojaVirtual.Data.csproj" Id="7beae81b-5fcc-472f-bd84-7e0ac9aacc3d" />
+  <Project Path="LojaVirtual.Entities/LojaVirtual.Entities.csproj" Id="4412720d-4278-4872-9846-462a9677beb8" />
+  <Project Path="LojaVirtual/LojaVirtual.csproj" />
+</Solution>
