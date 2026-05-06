@@ -57,7 +57,7 @@ namespace LojaVirtual.Controllers
                 _logger.LogError(ex, "Error while creating product");
                 return StatusCode(500, new
                 {
-                    message = ex.Message
+                    message = Helper.ParseErrorMessage(ex.Message)
                 });
             }
         }
@@ -74,8 +74,7 @@ namespace LojaVirtual.Controllers
                     PropertyNameCaseInsensitive = true
                 });
 
-                ProductViewModel? viewModel = model!;
-
+                ProductViewModel viewModel = model!;
                 return View(viewModel);
             }
             catch (Exception ex)
@@ -86,20 +85,17 @@ namespace LojaVirtual.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Edit(ProductViewModel request)
+        public async Task<IActionResult> Edit([FromBody] ProductViewModel request)
         {
             try
             {
                 await _applicationFactory.CallWebService($"api/Products/Patch/{request.Id}", RequestTypeEnum.PATCH, request);
-
-                return RedirectToAction("Index");
+                return Ok();
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error while updating product {Id}", request.Id);
-
-                ModelState.AddModelError(string.Empty, ex.Message);
-                return View(request);
+                return BadRequest(new { message = Helper.ParseErrorMessage(ex.Message) });
             }
         }
 
@@ -118,7 +114,7 @@ namespace LojaVirtual.Controllers
 
                 return StatusCode(500, new
                 {
-                    message = ex.Message
+                    message = Helper.ParseErrorMessage(ex.Message)
                 });
             }
         }

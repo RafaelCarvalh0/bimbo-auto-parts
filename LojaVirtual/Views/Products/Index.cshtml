@@ -11,7 +11,7 @@
     <div class="page-header">
         <div class="page-header-left">
             <h1><i class="fas fa-box me-2" style="color:#2563eb;font-size:1.3rem;"></i>Products</h1>
-            <p>Manage your store product</p>
+            <p>Manage your store products</p>
         </div>
         <button class="btn-add" onclick="AddProduct()">
             <i class="fas fa-plus"></i> Add Product
@@ -137,7 +137,8 @@
         function CreateProduct() {
             const name        = $('#inputName').val().trim();
             const description = $('#inputDescription').val().trim();
-            const price       = parseFloat($('#inputPrice').val());
+            const priceVal = $('#inputPrice').val();
+            const price = parseFloat(priceVal);
             const categoryId  = parseInt($('#inputCategory').val());
 
             let valid = true;
@@ -146,18 +147,28 @@
                 $('#inputName').addClass('is-invalid');
                 $('#nameError').text('Name is required.');
                 valid = false;
+            } else {
+                $('#inputName').removeClass('is-invalid');
+                $('#nameError').text('');
             }
 
-            if (!price || price <= 0) {
+            if (!priceVal || isNaN(price) || price <= 0) {
                 $('#inputPrice').addClass('is-invalid');
                 $('#priceError').text('Price must be greater than zero.');
                 valid = false;
+            } else {
+                $('#inputPrice').removeClass('is-invalid');
+                $('#priceError').text('');
             }
 
             if (!categoryId) {
                 $('#inputCategory').addClass('is-invalid');
                 $('#categoryError').text('Please select a category.');
                 valid = false;
+            }
+            else {
+                $('#inputCategory').removeClass('is-invalid');
+                $('#categoryError').text('');
             }
 
             if (!valid) return;

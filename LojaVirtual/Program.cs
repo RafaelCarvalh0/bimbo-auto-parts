@@ -1,5 +1,4 @@
 using LojaVirtual.Extensions;
-using LojaVirtual.Services.Application;
 
 var builder = WebApplication.CreateBuilder(args);
 

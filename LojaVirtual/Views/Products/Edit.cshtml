@@ -21,17 +21,6 @@
         </a>
     </div>
 
-    @if (!ViewData.ModelState.IsValid)
-    {
-        <div class="edit-alert edit-alert-danger mb-4">
-            <i class="fas fa-exclamation-circle me-2"></i>
-            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
-            {
-                <span>@error.ErrorMessage</span>
-            }
-        </div>
-    }
-
     <div class="edit-card">
 
         <div class="edit-card-header">
@@ -40,27 +29,26 @@
         </div>
 
         <div class="edit-card-body">
-            <form asp-action="Edit" method="post">
-                <input type="hidden" asp-for="Id" />
+            <form id="editForm">
+                <input type="hidden" id="productId" value="@Model.Id" />
 
                 <div class="edit-form-group">
-                    <label class="edit-label">
-                        Name <span class="required">*</span>
-                    </label>
-                    <input asp-for="Name" class="edit-input" placeholder="e.g. Brake Pad" maxlength="100" />
+                    <label class="edit-label">Name <span class="required">*</span></label>
+                    <input type="text" id="inputName" class="edit-input"
+                           value="@Model.Name" placeholder="e.g. Brake Pad" maxlength="100" />
                     <div class="edit-char-counter">
-                        <span asp-validation-for="Name" class="edit-validation-error"></span>
+                        <span class="edit-validation-error" id="nameError"></span>
                         <span class="char-hint">max 100 characters</span>
                     </div>
                 </div>
 
                 <div class="edit-form-group">
                     <label class="edit-label">Description</label>
-                    <textarea asp-for="Description" class="edit-input edit-textarea"
+                    <textarea id="inputDescription" class="edit-input edit-textarea"
                               rows="4" placeholder="Brief description of this product..."
-                              maxlength="500"></textarea>
+                              maxlength="500">@Model.Description</textarea>
                     <div class="edit-char-counter">
-                        <span asp-validation-for="Description" class="edit-validation-error"></span>
+                        <span class="edit-validation-error" id="descError"></span>
                         <span class="char-hint">max 500 characters</span>
                     </div>
                 </div>
@@ -71,9 +59,9 @@
                         <div class="input-group">
                             <span class="input-group-text edit-prefix">$</span>
 
-                            <input asp-for="Price" 
+                            <input asp-for="Price"
                                    type="number"
-                                   id="Price"
+                                   id="inputPrice"
                                    class="form-control"
                                    placeholder="0.00"
                                    min="0"
@@ -82,59 +70,113 @@
                                    value="@Model.Price.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)" />
 
                         </div>
-                        <span asp-validation-for="Price" class="edit-validation-error"></span>
+                        <span class="edit-validation-error" id="priceError"></span>
                     </div>
 
                     <div class="col-md-6">
-                        <label class="edit-label">
-                            Category <span class="required">*</span>
-                        </label>
-                        <select asp-for="CategoryId" id="selectCategory" class="edit-input">
+                        <label class="edit-label">Category <span class="required">*</span></label>
+                        <select id="selectCategory" class="edit-input">
                             <option value="">Loading categories...</option>
                         </select>
-                        <span asp-validation-for="CategoryId" class="edit-validation-error"></span>
+                        <span class="edit-validation-error" id="categoryError"></span>
                     </div>
                 </div>
 
                 <div class="edit-actions">
                     <a asp-action="Index" class="btn-cancel-form">Cancel</a>
-                    <button type="submit" class="btn-save-form">
+                    <button type="button" id="btnSave" class="btn-save-form" onclick="SaveProduct()">
                         <i class="fas fa-check me-1"></i> Save Changes
                     </button>
                 </div>
-
             </form>
         </div>
     </div>
 </div>
 
-<style>
-    
-</style>
-
 @section Scripts {
-    <script>
-        $(document).ready(function () {
-            const currentCategoryId = @Model.CategoryId;
+<script>
 
-            $.ajax({
-                type: 'GET',
-                url: '@Url.Action("GetTable", "Categories")'
-            }).done(function (response) {
-                const select = $('#selectCategory');
-                select.html('<option value="">Select a category...</option>');
+    $(document).ready(function () {
+        LoadCategories();
+    });
 
-                response.data.forEach(function (cat) {
-                    const selected = cat.id === currentCategoryId ? 'selected' : '';
-                    select.append(`<option value="${cat.id}" ${selected}>${cat.name}</option>`);
-                });
-            }).fail(function () {
-                $('#selectCategory').html('<option value="">Failed to load categories</option>');
+    function LoadCategories() {
+        const currentCategoryId = @Model.CategoryId;
+
+        $.ajax({
+            type: 'GET',
+            url: '@Url.Action("GetTable", "Categories")'
+        }).done(function (response) {
+            const select = $('#selectCategory');
+            select.html('<option value="">Select a category...</option>');
+
+            response.data.forEach(function (cat) {
+                const selected = cat.id === currentCategoryId ? 'selected' : '';
+                select.append(`<option value="${cat.id}" ${selected}>${cat.name}</option>`);
             });
+        }).fail(function () {
+            $('#selectCategory').html('<option value="">Failed to load categories</option>');
         });
-    </script>
-
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+
+    function SaveProduct() {
+        const id          = $('#productId').val();
+        const name        = $('#inputName').val().trim();
+        const description = $('#inputDescription').val().trim();
+        const price       = parseFloat($('#inputPrice').val());
+        const categoryId  = parseInt($('#selectCategory').val());
+
+        let valid = true;
+
+        if (!name) {
+            $('#inputName').addClass('is-invalid');
+            $('#nameError').text('Name is required.');
+            valid = false;
+        } else {
+            $('#inputName').removeClass('is-invalid');
+            $('#nameError').text('');
+        }
+
+        if (!price || price <= 0) {
+            $('#inputPrice').addClass('is-invalid');
+            $('#priceError').text('Price must be greater than zero.');
+            valid = false;
+        } else {
+            $('#inputPrice').removeClass('is-invalid');
+            $('#priceError').text('');
+        }
+
+        if (!categoryId) {
+            $('#selectCategory').addClass('is-invalid');
+            $('#categoryError').text('Please select a category.');
+            valid = false;
+        } else {
+            $('#selectCategory').removeClass('is-invalid');
+            $('#categoryError').text('');
+        }
+
+        if (!valid) return;
+
+        $('#btnSave').prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Saving...');
+
+        $.ajax({
+            type: 'POST',
+            url: '@Url.Action("Edit", "Products")',
+            contentType: 'application/json',
+            data: JSON.stringify({ id, name, description, price, categoryId })
+        }).done(function () {
+            window.location.href = '@Url.Action("Index", "Products")';
+        }).fail(function (xhr) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: xhr.responseJSON?.message ?? 'An unexpected error occurred.',
+                confirmButtonColor: '#2563eb'
+            });
+        }).always(function () {
+            $('#btnSave').prop('disabled', false).html('<i class="fas fa-check me-1"></i> Save Changes');
+        });
+    }
+
+</script>
 }

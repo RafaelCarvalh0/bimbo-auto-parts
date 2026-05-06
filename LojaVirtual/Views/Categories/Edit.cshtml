@@ -21,17 +21,6 @@
         </a>
     </div>
 
-    @if (!ViewData.ModelState.IsValid)
-    {
-        <div class="edit-alert edit-alert-danger mb-4">
-            <i class="fas fa-exclamation-circle me-2"></i>
-            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
-            {
-                <span>@error.ErrorMessage</span>
-            }
-        </div>
-    }
-
     <div class="edit-card">
 
         <div class="edit-card-header">
@@ -40,45 +29,78 @@
         </div>
 
         <div class="edit-card-body">
-            <form asp-action="Edit" method="post">
-                <input type="hidden" asp-for="Id" />
+            <form id="editForm">
+                <input type="hidden" id="categoryId" value="@Model.Id" />
 
                 <div class="edit-form-group">
-                    <label class="edit-label">
-                        Name <span class="required">*</span>
-                    </label>
-                    <input asp-for="Name" class="edit-input" placeholder="e.g. Electronics" maxlength="100" />
+                    <label class="edit-label">Name <span class="required">*</span></label>
+                    <input type="text" id="inputName" class="edit-input"
+                           value="@Model.Name" placeholder="e.g. Electronics" maxlength="100" />
                     <div class="edit-char-counter">
-                        <span asp-validation-for="Name" class="edit-validation-error"></span>
+                        <span class="edit-validation-error" id="nameError"></span>
                         <span class="char-hint">max 100 characters</span>
                     </div>
                 </div>
 
                 <div class="edit-form-group">
                     <label class="edit-label">Description</label>
-                    <textarea asp-for="Description" class="edit-input edit-textarea"
+                    <textarea id="inputDescription" class="edit-input edit-textarea"
                               rows="4" placeholder="Brief description of this category..."
-                              maxlength="500"></textarea>
+                              maxlength="500">@Model.Description</textarea>
                     <div class="edit-char-counter">
-                        <span asp-validation-for="Description" class="edit-validation-error"></span>
+                        <span class="edit-validation-error" id="descError"></span>
                         <span class="char-hint">max 500 characters</span>
                     </div>
                 </div>
 
                 <div class="edit-actions">
-                    <a asp-action="Index" class="btn-cancel-form">
-                        Cancel
-                    </a>
-                    <button type="submit" class="btn-save-form">
+                    <a asp-action="Index" class="btn-cancel-form">Cancel</a>
+                    <button type="button" id="btnSave" class="btn-save-form" onclick="SaveCategory()">
                         <i class="fas fa-check me-1"></i> Save Changes
                     </button>
                 </div>
-
             </form>
         </div>
     </div>
 </div>
 
 @section Scripts {
-    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+<script>
+
+    function SaveCategory() {
+        const id          = $('#categoryId').val();
+        const name        = $('#inputName').val().trim();
+        const description = $('#inputDescription').val().trim();
+
+        if (!name) {
+            $('#inputName').addClass('is-invalid');
+            $('#nameError').text('Name is required.');
+            return;
+        }
+
+        $('#inputName').removeClass('is-invalid');
+        $('#nameError').text('');
+
+        $('#btnSave').prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Saving...');
+
+        $.ajax({
+            type: 'POST',
+            url: '@Url.Action("Edit", "Categories")',
+            contentType: 'application/json',
+            data: JSON.stringify({ id, name, description })
+        }).done(function () {
+            window.location.href = '@Url.Action("Index", "Categories")';
+        }).fail(function (xhr) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: xhr.responseJSON?.message ?? 'An unexpected error occurred.',
+                confirmButtonColor: '#2563eb'
+            });
+        }).always(function () {
+            $('#btnSave').prop('disabled', false).html('<i class="fas fa-check me-1"></i> Save Changes');
+        });
+    }
+
+</script>
 }

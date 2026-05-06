@@ -57,7 +57,7 @@ namespace LojaVirtual.Controllers
                 _logger.LogError(ex, "Error while creating category");
                 return StatusCode(500, new
                 {
-                    message = ex.Message
+                    message = Helper.ParseErrorMessage(ex.Message)
                 });
             }
         }
@@ -74,8 +74,7 @@ namespace LojaVirtual.Controllers
                     PropertyNameCaseInsensitive = true
                 });
 
-                CategoryViewModel? viewModel = model!;
-
+                CategoryViewModel viewModel = model!;
                 return View(viewModel);
             }
             catch (Exception ex)
@@ -86,22 +85,19 @@ namespace LojaVirtual.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Edit(CategoryViewModel request)
+        public async Task<IActionResult> Edit([FromBody] CategoryViewModel request)
         {
             try
             {
                 await _applicationFactory.CallWebService($"api/Categories/Patch/{request.Id}", RequestTypeEnum.PATCH, request);
-
-                return RedirectToAction("Index");
+                return Ok();
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error while updating category {Id}", request.Id);
-
-                ModelState.AddModelError(string.Empty, ex.Message);
-                return View(request);
+                return BadRequest(new { message = Helper.ParseErrorMessage(ex.Message) });
             }
-        }
+        } 
 
         [HttpDelete]
         public async Task<IActionResult> Delete(int id)
@@ -118,7 +114,7 @@ namespace LojaVirtual.Controllers
 
                 return StatusCode(500, new
                 {
-                    message = ex.Message
+                    message = Helper.ParseErrorMessage(ex.Message)
                 });
             }
         }
